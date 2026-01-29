@@ -1,235 +1,73 @@
-//Initial references
-const container = document.querySelector(".container");
-const playerTurn = document.getElementById("playerTurn");
-const startScreen = document.querySelector(".startScreen");
-const startButton = document.getElementById("start");
-const message = document.getElementById("message");
-let initialMatrix = [
-  [0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0],
-];
-let currentPlayer;
+const wordDisplay = document.querySelector(".word-display");
+const guessesText = document.querySelector(".guesses-text b");
+const keyboardDiv = document.querySelector(".keyboard");
+const hangmanImage = document.querySelector(".hangman-box img");
+const gameModal = document.querySelector(".game-modal");
+const playAgainBtn = gameModal.querySelector("button");
 
-//Random Number Between Range
-const generateRandomNumber = (min, max) =>
-  Math.floor(Math.random() * (max - min)) + min;
+// Initializing game variables
+let currentWord, correctLetters, wrongGuessCount;
+const maxGuesses = 6;
 
-//Loop through array and check for same values
-const verifyArray = (arrayElement) => {
-  let bool = false;
-  let elementCount = 0;
-  arrayElement.forEach((element, index) => {
-    if (element == currentPlayer) {
-      elementCount += 1;
-      if (elementCount == 4) {
-        bool = true;
-      }
+const resetGame = () => {
+    // Ressetting game variables and UI elements
+    correctLetters = [];
+    wrongGuessCount = 0;
+    hangmanImage.src = "images/hangman-0.svg";
+    guessesText.innerText = `${wrongGuessCount} / ${maxGuesses}`;
+    wordDisplay.innerHTML = currentWord.split("").map(() => `<li class="letter"></li>`).join("");
+    keyboardDiv.querySelectorAll("button").forEach(btn => btn.disabled = false);
+    gameModal.classList.remove("show");
+}
+
+const getRandomWord = () => {
+    // Selecting a random word and hint from the wordList
+    const { word, hint } = wordList[Math.floor(Math.random() * wordList.length)];
+    currentWord = word; // Making currentWord as random word
+    document.querySelector(".hint-text b").innerText = hint;
+    resetGame();
+}
+
+const gameOver = (isVictory) => {
+    // After game complete.. showing modal with relevant details
+    const modalText = isVictory ? `You found the word:` : 'The correct word was:';
+    gameModal.querySelector("img").src = `images/${isVictory ? 'victory' : 'lost'}.gif`;
+    gameModal.querySelector("h4").innerText = isVictory ? 'Congrats!' : 'Game Over!';
+    gameModal.querySelector("p").innerHTML = `${modalText} <b>${currentWord}</b>`;
+    gameModal.classList.add("show");
+}
+
+const initGame = (button, clickedLetter) => {
+    // Checking if clickedLetter is exist on the currentWord
+    if(currentWord.includes(clickedLetter)) {
+        // Showing all correct letters on the word display
+        [...currentWord].forEach((letter, index) => {
+            if(letter === clickedLetter) {
+                correctLetters.push(letter);
+                wordDisplay.querySelectorAll("li")[index].innerText = letter;
+                wordDisplay.querySelectorAll("li")[index].classList.add("guessed");
+            }
+        });
     } else {
-      elementCount = 0;
+        // If clicked letter doesn't exist then update the wrongGuessCount and hangman image
+        wrongGuessCount++;
+        hangmanImage.src = `images/hangman-${wrongGuessCount}.svg`;
     }
-  });
-  return bool;
-};
+    button.disabled = true; // Disabling the clicked button so user can't click again
+    guessesText.innerText = `${wrongGuessCount} / ${maxGuesses}`;
 
-//Check for game over(Last step)
-const gameOverCheck = () => {
-  let truthCounnt = 0;
-  for (let innerArray of initialMatrix) {
-    if (innerArray.every((val) => val != 0)) {
-      truthCounnt += 1;
-    } else {
-      return false;
-    }
-  }
-  if (truthCounnt == 6) {
-    message.innerText = "Game Over";
-    startScreen.classList.remove("hide");
-  }
-};
+    // Calling gameOver function if any of these condition meets
+    if(wrongGuessCount === maxGuesses) return gameOver(false);
+    if(correctLetters.length === currentWord.length) return gameOver(true);
+}
 
-//Check rows
-const checkAdjacentRowValues = (row) => {
-  return verifyArray(initialMatrix[row]);
-};
+// Creating keyboard buttons and adding event listeners
+for (let i = 97; i <= 122; i++) {
+    const button = document.createElement("button");
+    button.innerText = String.fromCharCode(i);
+    keyboardDiv.appendChild(button);
+    button.addEventListener("click", (e) => initGame(e.target, String.fromCharCode(i)));
+}
 
-//Check columns
-const checkAdjacentColumnValues = (column) => {
-  let colWinCount = 0,
-    colWinBool = false;
-  initialMatrix.forEach((element, index) => {
-    if (element[column] == currentPlayer) {
-      colWinCount += 1;
-      if (colWinCount == 4) {
-        colWinBool = true;
-      }
-    } else {
-      colWinCount = 0;
-    }
-  });
-  //no match
-  return colWinBool;
-};
-
-//Get Right diagonal values
-const getRightDiagonal = (row, column, rowLength, columnLength) => {
-  let rowCount = row;
-  let columnCount = column;
-  let rightDiagonal = [];
-  while (rowCount > 0) {
-    if (columnCount >= columnLength - 1) {
-      break;
-    }
-    rowCount -= 1;
-    columnCount += 1;
-    rightDiagonal.unshift(initialMatrix[rowCount][columnCount]);
-  }
-  rowCount = row;
-  columnCount = column;
-  while (rowCount < rowLength) {
-    if (columnCount < 0) {
-      break;
-    }
-    rightDiagonal.push(initialMatrix[rowCount][columnCount]);
-    rowCount += 1;
-    columnCount -= 1;
-  }
-  return rightDiagonal;
-};
-
-const getLeftDiagonal = (row, column, rowLength, columnLength) => {
-  let rowCount = row;
-  let columnCount = column;
-  let leftDiagonal = [];
-  while (rowCount > 0) {
-    if (columnCount <= 0) {
-      break;
-    }
-    rowCount -= 1;
-    columnCount -= 1;
-    leftDiagonal.unshift(initialMatrix[rowCount][columnCount]);
-  }
-  rowCount = row;
-  columnCount = column;
-  while (rowCount < rowLength) {
-    if (columnCount >= columnLength) {
-      break;
-    }
-    leftDiagonal.push(initialMatrix[rowCount][columnCount]);
-    rowCount += 1;
-    columnCount += 1;
-  }
-  return leftDiagonal;
-};
-
-//Check diagonal
-const checkAdjacentDiagonalValues = (row, column) => {
-  let diagWinBool = false;
-  let tempChecks = {
-    leftTop: [],
-    rightTop: [],
-  };
-  let columnLength = initialMatrix[row].length;
-  let rowLength = initialMatrix.length;
-
-  //Store left and right diagonal array
-  tempChecks.leftTop = [
-    ...getLeftDiagonal(row, column, rowLength, columnLength),
-  ];
-
-  tempChecks.rightTop = [
-    ...getRightDiagonal(row, column, rowLength, columnLength),
-  ];
-  //check both arrays for similarities
-  diagWinBool = verifyArray(tempChecks.rightTop);
-  if (!diagWinBool) {
-    diagWinBool = verifyArray(tempChecks.leftTop);
-  }
-  return diagWinBool;
-};
-
-//Win check logic
-const winCheck = (row, column) => {
-  //if any of the functions return true we return true
-  return checkAdjacentRowValues(row)
-    ? true
-    : checkAdjacentColumnValues(column)
-    ? true
-    : checkAdjacentDiagonalValues(row, column)
-    ? true
-    : false;
-};
-
-//Sets the circle to exact points
-const setPiece = (startCount, colValue) => {
-  let rows = document.querySelectorAll(".grid-row");
-  //Initially it will place the circles in the last row else if no place availabke we will decrement the count until we find empty slot
-  if (initialMatrix[startCount][colValue] != 0) {
-    startCount -= 1;
-    setPiece(startCount, colValue);
-  } else {
-    //place circle
-    let currentRow = rows[startCount].querySelectorAll(".grid-box");
-    currentRow[colValue].classList.add("filled", `player${currentPlayer}`);
-    //Update Matrix
-    initialMatrix[startCount][colValue] = currentPlayer;
-    //Check for wins
-    if (winCheck(startCount, colValue)) {
-      message.innerHTML = `Player<span> ${currentPlayer}</span> wins`;
-      startScreen.classList.remove("hide");
-      return false;
-    }
-  }
-  //Check if all are full
-  gameOverCheck();
-};
-
-//When user clicks on a box
-const fillBox = (e) => {
-  //get column value
-  let colValue = parseInt(e.target.getAttribute("data-value"));
-  //5 because we have 6 rows (0-5)
-  setPiece(5, colValue);
-  currentPlayer = currentPlayer == 1 ? 2 : 1;
-
-  playerTurn.innerHTML = `Player <span>${currentPlayer}'s</span> turn`;
-};
-
-//Create Matrix
-const matrixCreator = () => {
-  for (let innerArray in initialMatrix) {
-    let outerDiv = document.createElement("div");
-    outerDiv.classList.add("grid-row");
-    outerDiv.setAttribute("data-value", innerArray);
-    for (let j in initialMatrix[innerArray]) {
-      //Set all matrix values to 0
-      initialMatrix[innerArray][j] = [0];
-      let innerDiv = document.createElement("div");
-      innerDiv.classList.add("grid-box");
-      innerDiv.setAttribute("data-value", j);
-      innerDiv.addEventListener("click", (e) => {
-        fillBox(e);
-      });
-      outerDiv.appendChild(innerDiv);
-    }
-    container.appendChild(outerDiv);
-  }
-};
-
-//Initialise game
-window.onload = startGame = async () => {
-  //Between 1 and 2
-  currentPlayer = generateRandomNumber(1, 3);
-  container.innerHTML = "";
-  await matrixCreator();
-  playerTurn.innerHTML = `Player <span>${currentPlayer}'s</span> turn`;
-};
-
-//start game
-startButton.addEventListener("click", () => {
-  startScreen.classList.add("hide");
-  startGame();
-});
+getRandomWord();
+playAgainBtn.addEventListener("click", getRandomWord);
