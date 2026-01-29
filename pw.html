@@ -1,0 +1,110 @@
+<!DOCTYPE html>  
+<html lang="en">  
+
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>Protected Access</title>  
+    <style>  
+        body {  
+            font-family: Arial, sans-serif;  
+            text-align: center;  
+            color: white;  
+            background-color: #202124;  
+            display: flex;  
+            flex-direction: column;  
+            justify-content: center;  
+            align-items: center;  
+            height: 100vh;  
+            margin: 0;  
+        }  
+
+        h1 {  
+            margin-bottom: 20px;  
+        }  
+
+        .form-container {  
+            background-color: rgba(255, 255, 255, 0.1);  
+            padding: 30px;  
+            border-radius: 10px;  
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);  
+        }  
+
+        .pass {  
+            background-color: #F2522E;  
+            color: white;  
+            padding: 10px 15px;  
+            border: none;  
+            border-radius: 5px;  
+            font-size: 16px;  
+            margin-top: 10px;  
+            width: 100%;  
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);  
+            outline: none;  
+            transition: background-color 0.3s, transform 0.3s;  
+        }  
+
+        .passs {  
+            background-color: #F2522E;  
+            color: white;  
+            padding: 10px 15px;  
+            border: none;  
+            border-radius: 5px;  
+            font-size: 16px;  
+            margin-top: 10px;  
+            width: 250px;  
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);  
+            outline: none;  
+            transition: background-color 0.3s, transform 0.3s;  
+        }
+
+        .pass:focus {  
+            outline: none;  
+        }  
+
+        button {  
+            cursor: pointer;  
+        }  
+
+        button:hover {  
+            background-color: #F2A03D;  
+            transform: scale(1.05);  
+        }  
+
+        #message {  
+            margin-top: 20px;  
+            font-size: 18px;  
+        }  
+    </style>  
+</head>  
+
+<body>  
+    <div class="form-container">  
+        <h1>Enter your password:</h1>  
+        <form onsubmit="checkPassword(event)">  
+            <input class="passs" type="password" id="password" name="password" placeholder="Your Password">  
+            <button class="pass" type="button" onclick="checkPassword(event)">Submit</button>  
+        </form>  
+    </div>  
+
+    <h2 id="message"></h2>  
+
+    <script>  
+        function checkPassword(event) {  
+            if (event) event.preventDefault();  
+
+            var passwordInput = document.getElementById("password");
+            var password = passwordInput.value;  
+            var messageElement = document.getElementById("message");  
+
+            if (password === "PHP") {  
+                window.location.href = "file:///C:/Users/nowgo/OneDrive/Documents/Coding/HTML.html";  
+            } else {  
+                messageElement.innerHTML = "<span style='color: red;'>Incorrect.</span> <br><br> Hint: The worst programming language is _______. (CAPITAL)<br> Try Again.";  
+                passwordInput.value = "";  
+            }  
+        }  
+    </script>  
+</body>  
+
+</html>
